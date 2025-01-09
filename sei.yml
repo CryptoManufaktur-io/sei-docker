@@ -1,0 +1,92 @@
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 100m
+      max-file: "3"
+      tag: '{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}'
+
+services:
+  sei:
+    build:
+      context: ./sei
+      dockerfile: Dockerfile.source
+      args:
+        - DAEMON_VERSION=${SEID_VERSION}
+        - USER=sei
+    image: sei:local
+    pull_policy: never
+    user: sei
+    restart: unless-stopped
+    stop_grace_period: 5m
+    environment:
+      - DAEMON_VERSION=${SEID_VERSION}
+      - EXTRA_FLAGS=${EXTRA_FLAGS:-}
+      - NETWORK=${NETWORK}
+      - MONIKER=${MONIKER}
+      - CL_GRPC_PORT=${CL_GRPC_PORT:-9090}
+      - CL_P2P_PORT=${CL_P2P_PORT:-26656}
+      - CL_RPC_PORT=${CL_RPC_PORT:-26657}
+      - REST_API_PORT=${REST_API_PORT:-1317}
+      - RPC_PORT=${RPC_PORT:-8545}
+      - WS_PORT=${WS_PORT:-8546}
+      - SNAPSHOT=${SNAPSHOT}
+      - STATE_SYNC=${STATE_SYNC}
+      - RPC_URL=${RPC_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    ports:
+      - ${CL_P2P_PORT:-26656}:${CL_P2P_PORT:-26656}/tcp
+      - ${CL_RPC_PORT:-26657}:${CL_RPC_PORT:-26657}/tcp
+    <<: *logging
+    volumes:
+      - consensus-data:/cosmos
+    entrypoint:
+      - docker-entrypoint.sh
+      - seid
+      - start
+      - --home
+      - /cosmos
+      - --chain-id
+      - $NETWORK
+      - --log_format
+      - json
+    labels:
+        - traefik.enable=true
+        - traefik.http.routers.${RPC_HOST}.service=${RPC_HOST}
+        - traefik.http.routers.${RPC_HOST}.entrypoints=websecure
+        - traefik.http.routers.${RPC_HOST}.rule=Host(`${RPC_HOST}.${DOMAIN}`)
+        - traefik.http.routers.${RPC_HOST}.tls.certresolver=letsencrypt
+        - traefik.http.routers.${RPC_HOST}lb.service=${RPC_HOST}
+        - traefik.http.routers.${RPC_HOST}lb.entrypoints=websecure
+        - traefik.http.routers.${RPC_HOST}lb.rule=Host(`${RPC_LB}.${DOMAIN}`)
+        - traefik.http.routers.${RPC_HOST}lb.tls.certresolver=letsencrypt
+        - traefik.http.services.${RPC_HOST}.loadbalancer.server.port=${RPC_PORT}
+        - traefik.http.routers.${WS_HOST:-seiws}.service=${WS_HOST:-seiws}
+        - traefik.http.routers.${WS_HOST:-seiws}.entrypoints=websecure
+        - traefik.http.routers.${WS_HOST:-seiws}.rule=Host(`${WS_HOST:-seiws}.${DOMAIN}`)
+        - traefik.http.routers.${WS_HOST:-seiws}.tls.certresolver=letsencrypt
+        - traefik.http.routers.${WS_HOST:-seiws}lb.service=${WS_HOST:-seiws}
+        - traefik.http.routers.${WS_HOST:-seiws}lb.entrypoints=websecure
+        - traefik.http.routers.${WS_HOST:-seiws}lb.rule=Host(`${WS_LB:-seiws-lb}.${DOMAIN}`)
+        - traefik.http.routers.${WS_HOST:-seiws}lb.tls.certresolver=letsencrypt
+        - traefik.http.services.${WS_HOST:-seiws}.loadbalancer.server.port=${WS_PORT:-8546}
+        - metrics.scrape=true
+        - metrics.path=/metrics
+        - metrics.port=26660
+        - metrics.instance=sei
+        - metrics.network=${NETWORK}
+
+  cli:
+    profiles: ["tools"]
+    build:
+      context: ./sei
+      dockerfile: Dockerfile.source
+      args:
+        - DAEMON_VERSION=${SEID_VERSION}
+        - USER=sei
+    image: sei:local
+    pull_policy: never
+    user: sei
+
+volumes:
+  consensus-data:
