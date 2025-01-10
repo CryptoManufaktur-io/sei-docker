@@ -586,7 +586,7 @@ __nag_os_version() {
 __pull_and_build() {
   __dodocker system prune --force
   __docompose --profile tools pull
-  __docompose --profile tools build --pull
+  __docompose --profile tools build --pull --no-cache  # This is a source build
 }
 
 
