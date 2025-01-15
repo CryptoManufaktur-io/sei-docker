@@ -236,7 +236,7 @@ dasel put -f /cosmos/config/config.toml -v true prometheus
 dasel put -f /cosmos/config/config.toml -v ${LOG_LEVEL} log_level
 dasel put -f /cosmos/config/config.toml -v "false" db-sync.db-sync-enable
 dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.send-rate
-dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.send-rate
+dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.recv-rate
 
 dasel put -f /cosmos/config/app.toml -v "0.0.0.0:${RPC_PORT}" json-rpc.address
 dasel put -f /cosmos/config/app.toml -v "0.0.0.0:${WS_PORT}" json-rpc.ws-address
