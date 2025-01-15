@@ -220,6 +220,14 @@ else
   echo "No updates needed."
 fi
 
+# temporary measure
+mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
+compile_version $DAEMON_VERSION
+mv /build/sei-chain/build/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
+echo "Done!"
+# temporary measure
+
+
 echo "Updating config..."
 
 # Get public IP address.
