@@ -4,50 +4,27 @@ set -euo pipefail
 #rm /cosmos/.cosmovisor
 
 compile_version() {
-  version="$1"
+  version=$1
 
   echo "Compiling $version binary..."
 
   # Always start from a clean state.
   rm -rf /build/*
   cd /build
-
-  # Clone sei-chain and checkout the desired tag
-  git clone https://github.com/sei-protocol/sei-chain.git
-  cd sei-chain
-  git checkout "tags/${version}"
-
-  # Fetch the correct muslc-based wasmvm library (mimicking Dockerfile logic),
-  # but put it in a local "lib/" directory (not "/lib").
-  export ARCH="$(uname -m)"
-
-  # The upstream wasmvm is overridden by sei-wasmvm. We'll strip out the suffix
-  # (e.g. "-sei") to get the original version for the precompiled rust libs.
-  WASM_VERSION="$(go list -f '{{.Replace.Version}}' -m github.com/CosmWasm/wasmvm | sed 's/-.*//')"
-
-  # Only download if we actually have a recognized WASM_VERSION
-  if [ -n "${WASM_VERSION}" ]; then
-    # Download the architecture-specific artifact from upstream
-    wget -O "libwasmvm_muslc.${ARCH}.a" \
-      "https://github.com/CosmWasm/wasmvm/releases/download/${WASM_VERSION}/libwasmvm_muslc.${ARCH}.a"
-
-    # Move it into our local 'lib/' and rename to libwasmvm.a
-    mkdir -p lib
-    mv "libwasmvm_muslc.${ARCH}.a" lib/libwasmvm_muslc.a
-  fi
-
-  # Download all Go modules
+  git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
   go mod download
-
-  # Use a statically linked build with the local muslc-based library
+  WASM_VERSION=$(go list -f {{.Replace.Version}} -m github.com/CosmWasm/wasmvm | sed s/-.*//)
+  echo "WASM_VERSION=$WASM_VERSION"
+  LIBWASMVM_FILENAME="libwasmvm_muslc.x86_64.a"
+  LIBWASMVM_URL="https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/$LIBWASMVM_FILENAME"
+  curl -L -o $LIBWASMVM_FILENAME $LIBWASMVM_URL
+  mkdir -p lib
+  mv $LIBWASMVM_FILENAME lib/libwasmvm.a
   export CGO_ENABLED=1
   export CGO_CFLAGS="-I$PWD/lib"
-  # export CGO_LDFLAGS="-L$PWD/lib -lwasmvm -lm"
-  export CGO_LDFLAGS="-L$PWD/lib -lwasmvm_muslc -lm"
+  export CGO_LDFLAGS="-L$PWD/lib -lwasmvm -lm"
   export CGO_LDFLAGS_ALLOW="-Wl,-rpath=.*"
-
-  # Force static linking and override relevant build tags
-  LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build -B
+  GOOS="linux" GOARCH="amd64" make build
 }
 
 # Common cosmovisor paths.
@@ -102,7 +79,7 @@ if [[ ! -f /cosmos/.initialized ]]; then
     dasel put -f /cosmos/config/config.toml -v $SNAPSHOT_HASH statesync.trust-hash
     dasel put -f /cosmos/config/config.toml -v 2 statesync.fetchers
     dasel put -f /cosmos/config/config.toml -v "10s" statesync.chunk-request-timeout
-  else 
+  else
     echo "No rapid sync url defined."
   fi
 
