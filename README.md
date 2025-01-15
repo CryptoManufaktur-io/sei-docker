@@ -16,7 +16,17 @@ If you want the consensus node RPC ports exposed locally, use `rpc-shared.yml` i
 
 To update the software, run `./seid update` and then `./seid up`
 
+## Updating sei-docker from v1.0.0
+
+Before upgrading the seid binary, run `./seid update` without changing the `SEID_VERSION` env var. It will set up cosmovisor using the current binary.
+
+Once that's done, you can update `SEID_VERSION` and restart the container so the new binary is compiled and added to the upgrades folder.
+
 ### CLI
+
+The Cosmovisor bin can be executed:
+
+- `docker compose run --rm cosmovisor cosmovisor add-upgrade ...`
 
 An image with the `seid` binary is also avilable, e.g:
 
@@ -26,4 +36,4 @@ An image with the `seid` binary is also avilable, e.g:
 
 Sei Docker uses a semver scheme.
 
-This is sei-docker v1.0.0
+This is sei-docker v2.0.0
