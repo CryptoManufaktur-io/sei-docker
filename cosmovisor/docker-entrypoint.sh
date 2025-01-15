@@ -1,30 +1,53 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rm /cosmos/.cosmovisor
+#rm /cosmos/.cosmovisor
 
 compile_version() {
-  version=$1
+  version="$1"
 
   echo "Compiling $version binary..."
 
   # Always start from a clean state.
   rm -rf /build/*
   cd /build
-  git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
+
+  # Clone sei-chain and checkout the desired tag
+  git clone https://github.com/sei-protocol/sei-chain.git
+  cd sei-chain
+  git checkout "tags/${version}"
+
+  # Fetch the correct muslc-based wasmvm library (mimicking Dockerfile logic),
+  # but put it in a local "lib/" directory (not "/lib").
+  export ARCH="$(uname -m)"
+
+  # The upstream wasmvm is overridden by sei-wasmvm. We'll strip out the suffix
+  # (e.g. "-sei") to get the original version for the precompiled rust libs.
+  WASM_VERSION="$(go list -f '{{.Replace.Version}}' -m github.com/CosmWasm/wasmvm | sed 's/-.*//')"
+
+  # Only download if we actually have a recognized WASM_VERSION
+  if [ -n "${WASM_VERSION}" ]; then
+    # Download the architecture-specific artifact from upstream
+    wget -O "libwasmvm_muslc.${ARCH}.a" \
+      "https://github.com/CosmWasm/wasmvm/releases/download/${WASM_VERSION}/libwasmvm_muslc.${ARCH}.a"
+
+    # Move it into our local 'lib/' and rename to libwasmvm.a
+    mkdir -p lib
+    mv "libwasmvm_muslc.${ARCH}.a" lib/libwasmvm_muslc.a
+  fi
+
+  # Download all Go modules
   go mod download
-  # WASMVM_VERSION=$(go list -m all | grep 'github.com/CosmWasm/wasmvm' | awk '{print $2}')
-  WASMVM_VERSION="v1.5.4"
-  LIBWASMVM_FILENAME="libwasmvm_muslc.x86_64.a"
-  LIBWASMVM_URL="https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/$LIBWASMVM_FILENAME"
-  curl -L -o $LIBWASMVM_FILENAME $LIBWASMVM_URL
-  mkdir -p lib
-  mv $LIBWASMVM_FILENAME lib/libwasmvm.a
+
+  # Use a statically linked build with the local muslc-based library
   export CGO_ENABLED=1
   export CGO_CFLAGS="-I$PWD/lib"
-  export CGO_LDFLAGS="-L$PWD/lib -lwasmvm -lm"
+  # export CGO_LDFLAGS="-L$PWD/lib -lwasmvm -lm"
+  export CGO_LDFLAGS="-L$PWD/lib -lwasmvm_muslc -lm"
   export CGO_LDFLAGS_ALLOW="-Wl,-rpath=.*"
-  GOOS="linux" GOARCH="amd64" make build
+
+  # Force static linking and override relevant build tags
+  LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build -B
 }
 
 # Common cosmovisor paths.
