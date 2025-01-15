@@ -38,6 +38,9 @@ if [[ ! -f /cosmos/.initialized ]]; then
   compile_version $DAEMON_VERSION
   mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
 
+  mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
+  cp  $__genesis_path/bin/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
+
   # Point to current.
   ln -s -f $__genesis_path $__current_path
 
@@ -91,6 +94,9 @@ if [[ ! -f /cosmos/.cosmovisor ]]; then
   mkdir -p $__genesis_path/bin
   mkdir $__upgrades_path
   mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
+
+  mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
+  cp  $__genesis_path/bin/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
 
   # Point to current.
   ln -s -f $__genesis_path $__current_path
