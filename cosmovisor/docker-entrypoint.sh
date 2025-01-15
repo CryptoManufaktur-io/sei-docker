@@ -92,7 +92,6 @@ fi
 if [[ ! -f /cosmos/.cosmovisor ]]; then
   compile_version $DAEMON_VERSION
   mkdir -p $__genesis_path/bin
-  mkdir $__upgrades_path
   mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
 
   mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
