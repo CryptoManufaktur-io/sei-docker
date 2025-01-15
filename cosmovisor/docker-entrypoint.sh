@@ -13,8 +13,8 @@ compile_version() {
   cd /build
   git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
   go mod download
-  WASM_VERSION=$(go list -f {{.Replace.Version}} -m github.com/CosmWasm/wasmvm | sed s/-.*//)
-  echo "WASM_VERSION=$WASM_VERSION"
+  WASMVM_VERSION=$(go list -f {{.Replace.Version}} -m github.com/CosmWasm/wasmvm | sed s/-.*//)
+  echo "WASMVM_VERSION=$WASMVM_VERSION"
   LIBWASMVM_FILENAME="libwasmvm_muslc.x86_64.a"
   LIBWASMVM_URL="https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/$LIBWASMVM_FILENAME"
   curl -L -o $LIBWASMVM_FILENAME $LIBWASMVM_URL
