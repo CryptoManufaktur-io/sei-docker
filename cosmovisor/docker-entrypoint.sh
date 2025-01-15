@@ -1,8 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# This is specific to each chain.
-__daemon_download_url=https://github.com/alexander-sei/sei-binaries/releases/download/$DAEMON_VERSION/seid-$DAEMON_VERSION-linux-amd64
+# rm /cosmos/.cosmovisor
+
+compile_version() {
+  version=$1
+
+  echo "Compiling $version binary..."
+
+  # Always start from a clean state.
+  rm -rf /build/*
+  cd /build
+  git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
+  go mod download
+  WASMVM_VERSION=$(go list -m all | grep 'github.com/CosmWasm/wasmvm' | awk '{print $2}')
+  LIBWASMVM_FILENAME="libwasmvm_muslc.x86_64.a"
+  LIBWASMVM_URL="https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/$LIBWASMVM_FILENAME"
+  curl -L -o $LIBWASMVM_FILENAME $LIBWASMVM_URL
+  mkdir -p lib
+  mv $LIBWASMVM_FILENAME lib/libwasmvm.a
+  export CGO_ENABLED=1
+  export CGO_CFLAGS="-I$PWD/lib"
+  export CGO_LDFLAGS="-L$PWD/lib -lwasmvm -lm"
+  export CGO_LDFLAGS_ALLOW="-Wl,-rpath=.*"
+  GOOS="linux" GOARCH="amd64" make build
+}
 
 # Common cosmovisor paths.
 __cosmovisor_path=/cosmos/cosmovisor
@@ -13,9 +35,8 @@ __upgrades_path=$__cosmovisor_path/upgrades
 if [[ ! -f /cosmos/.initialized ]]; then
   echo "Initializing!"
 
-  echo "Downloading binary..."
-  wget -qO- $__daemon_download_url | tar  -xz -C $__genesis_path/bin/ $DAEMON_NAME
-  chmod a+x $__genesis_path/bin/$DAEMON_NAME
+  compile_version $DAEMON_VERSION
+  mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
 
   # Point to current.
   ln -s -f $__genesis_path $__current_path
@@ -65,8 +86,22 @@ if [[ ! -f /cosmos/.initialized ]]; then
   fi
 
   touch /cosmos/.initialized
+  touch /cosmos/.cosmovisor
 else
   echo "Already initialized!"
+fi
+
+# If previously running without cosmovisor.
+if [[ ! -f /cosmos/.cosmovisor ]]; then
+  compile_version $DAEMON_VERSION
+  mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
+
+  # Point to current.
+  ln -s -f $__genesis_path $__current_path
+
+  touch /cosmos/.cosmovisor
+else
+  echo "Cosmovisor support already handled!"
 fi
 
 # Handle updates and upgrades.
@@ -171,26 +206,19 @@ compare_versions $__current_version $DAEMON_VERSION
 # __should_update=1: Higher patch version.
 # __should_update=2: Higher minor or major version.
 if [ "$__should_update" -eq 2 ]; then
-  echo "Downloading network upgrade..."
-  # This is a network upgrade. We'll download the binary, put it in a new folder
+  echo "Network upgrade..."
+  # This is a network upgrade. We'll build the binary, put it in a new folder
   # and we'll let cosmovisor handle the upgrade just in time.
-  __proposals_url="${COSMOS_REST_API_URL}/cosmos/gov/v1beta1/proposals?pagination.reverse=true&pagination.limit=100"
-  __proposal=$(curl -s "$__proposals_url" | jq -r --arg version "$DAEMON_VERSION" '
-  .proposals[]
-  | select(
-      .status == "PROPOSAL_STATUS_PASSED"
-      and .content["@type"] == "/cosmos.upgrade.v1beta1.SoftwareUpgradeProposal"
-      and .content.plan.name == $version
-    )
-  ')
-  __upgrade_name=$(echo "$__proposal" | jq -r '.content.plan.name')
-
-  mkdir -p $__cosmovisor_path/$__upgrade_name/bin
-  wget -qO- $__daemon_download_url | tar  -xz -C $__upgrades_path/$__upgrade_name/bin/ $DAEMON_NAME
+  # Thankfully, sei keeps the upgrade name the same as the version tag, so no need to query
+  # the tendermint API.
+  mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
+  compile_version $DAEMON_VERSION
+  mv /build/sei-chain/build/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
   echo "Done!"
 elif [ "$__should_update" -eq 1 ]; then
   echo "Updating binary for current version."
-  wget -qO- $__daemon_download_url | tar  -xz -C $__current_path/bin/ $DAEMON_NAME
+  compile_version $DAEMON_VERSION
+  mv /build/sei-chain/build/$DAEMON_NAME $__current_path/bin/$DAEMON_NAME
   echo "Done!"
 else
   echo "No updates needed."

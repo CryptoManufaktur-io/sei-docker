@@ -1,7 +1,7 @@
 # Get dasel
 FROM ghcr.io/tomwright/dasel:2-alpine AS dasel
 
-FROM debian:bookworm-slim
+FROM golang:1.22-bookworm
 
 ARG USER=cosmos
 ARG UID=10001
@@ -31,12 +31,14 @@ RUN mkdir -p /cosmos/cosmovisor/genesis/bin
 RUN mkdir /cosmos/cosmovisor/upgrades
 RUN mkdir /cosmos/config
 RUN mkdir /cosmos/data
+RUN mkdir /build
 
 # Copy binaries.
 COPY --from=dasel --chown=${USER}:${USER} /usr/local/bin/dasel /usr/local/bin/
 
 # Set correct permissions.
 RUN chown -R ${USER}:${USER} /cosmos && chmod -R 700 /cosmos
+RUN chown -R ${USER}:${USER} /build && chmod -R 700 /build
 
 # Cannot assume buildkit, hence no chmod
 COPY ./docker-entrypoint.sh /usr/local/bin/
