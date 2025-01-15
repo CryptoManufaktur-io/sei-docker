@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# rm /cosmos/.cosmovisor
+#rm /cosmos/.cosmovisor
 
 compile_version() {
   version=$1
@@ -13,7 +13,8 @@ compile_version() {
   cd /build
   git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
   go mod download
-  WASMVM_VERSION=$(go list -m all | grep 'github.com/CosmWasm/wasmvm' | awk '{print $2}')
+  WASMVM_VERSION=$(go list -f {{.Replace.Version}} -m github.com/CosmWasm/wasmvm | sed s/-.*//)
+  echo "WASMVM_VERSION=$WASMVM_VERSION"
   LIBWASMVM_FILENAME="libwasmvm_muslc.x86_64.a"
   LIBWASMVM_URL="https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/$LIBWASMVM_FILENAME"
   curl -L -o $LIBWASMVM_FILENAME $LIBWASMVM_URL
@@ -78,7 +79,7 @@ if [[ ! -f /cosmos/.initialized ]]; then
     dasel put -f /cosmos/config/config.toml -v $SNAPSHOT_HASH statesync.trust-hash
     dasel put -f /cosmos/config/config.toml -v 2 statesync.fetchers
     dasel put -f /cosmos/config/config.toml -v "10s" statesync.chunk-request-timeout
-  else 
+  else
     echo "No rapid sync url defined."
   fi
 
