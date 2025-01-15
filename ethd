@@ -20,7 +20,7 @@ version() {
 # Adjust for your clients and how to check their version
   case "${__value}" in
     *sei.yml* )
-      __docompose exec sei seid version
+      __docompose exec sei cosmovisor version
       ;;&
   esac
 }

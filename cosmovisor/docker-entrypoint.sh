@@ -47,12 +47,6 @@ if [[ ! -f /cosmos/.initialized ]]; then
   echo "Downloading genesis..."
   wget https://raw.githubusercontent.com/sei-protocol/testnet/main/$NETWORK/genesis.json -O /cosmos/config/genesis.json
 
-  echo "Downloading peers..."
-  PEERS=$(curl -sL "${RPC_URL}/net_info")
-  PARSED_PEERS=$(echo "$PEERS" | jq -r '.peers[].url | sub("^mconn://"; "")' | paste -sd "," -)
-
-  dasel put -f /cosmos/config/config.toml -v $PARSED_PEERS p2p.persistent-peers
-
   if [ -n "$SNAPSHOT" ]; then
     echo "Downloading snapshot..."
     curl -o - -L $SNAPSHOT | lz4 -c -d - | tar --exclude='data/priv_validator_state.json' -x -C /cosmos
@@ -253,6 +247,13 @@ dasel put -f /cosmos/config/app.toml -v "true" state-commit.sc-enable
 dasel put -f /cosmos/config/app.toml -v "true" state-store.ss-enable
 
 dasel put -f /cosmos/config/client.toml -v "tcp://localhost:${CL_RPC_PORT}" node
+
+# Always update peers.
+echo "Downloading peers..."
+PEERS=$(curl -sL "${RPC_URL}/net_info")
+PARSED_PEERS=$(echo "$PEERS" | jq -r '.peers[].url | sub("^mconn://"; "")' | paste -sd "," -)
+
+dasel put -f /cosmos/config/config.toml -v $PARSED_PEERS p2p.persistent-peers
 
 # cosmovisor will create a subprocess to handle upgrades
 # so we need a special way to handle SIGTERM
