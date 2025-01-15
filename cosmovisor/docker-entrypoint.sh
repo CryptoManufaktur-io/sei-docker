@@ -251,6 +251,14 @@ dasel put -f /cosmos/config/app.toml -v "tcp://0.0.0.0:${REST_API_PORT}" api.add
 dasel put -f /cosmos/config/app.toml -v "true" state-commit.sc-enable
 dasel put -f /cosmos/config/app.toml -v "true" state-store.ss-enable
 
+# experimental
+dasel put -f /cosmos/config/app.toml -v 1 state-commit.sc-snapshot-writer-limit
+dasel put -f /cosmos/config/app.toml -v 100000 state-commit.sc-cache-size
+
+dasel put -f /cosmos/config/app.toml -v 40000 state-store.sc-cache-size
+dasel put -f /cosmos/config/app.toml -v 500 state-store.concurrency-workers
+dasel put -f /cosmos/config/app.toml -v "true" state-store.occ-enabled
+
 dasel put -f /cosmos/config/client.toml -v "tcp://localhost:${CL_RPC_PORT}" node
 
 # Always update peers.
