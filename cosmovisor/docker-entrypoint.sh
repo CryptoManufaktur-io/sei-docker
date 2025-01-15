@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# rm /cosmos/.cosmovisor
+rm /cosmos/.cosmovisor
 
 compile_version() {
   version=$1
@@ -13,7 +13,8 @@ compile_version() {
   cd /build
   git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
   go mod download
-  WASMVM_VERSION=$(go list -m all | grep 'github.com/CosmWasm/wasmvm' | awk '{print $2}')
+  # WASMVM_VERSION=$(go list -m all | grep 'github.com/CosmWasm/wasmvm' | awk '{print $2}')
+  WASMVM_VERSION="v1.5.4"
   LIBWASMVM_FILENAME="libwasmvm_muslc.x86_64.a"
   LIBWASMVM_URL="https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/$LIBWASMVM_FILENAME"
   curl -L -o $LIBWASMVM_FILENAME $LIBWASMVM_URL
