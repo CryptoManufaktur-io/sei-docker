@@ -1,0 +1,6 @@
+services:
+  sei:
+    volumes:
+      - /mnt/disks/sei-chaindata:/cosmos # this requires all the required folders to be created manually
+
+volumes:
