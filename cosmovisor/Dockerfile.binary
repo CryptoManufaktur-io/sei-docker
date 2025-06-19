@@ -1,11 +1,11 @@
 # Get dasel
 FROM ghcr.io/tomwright/dasel:2-alpine AS dasel
 
-FROM golang:1.22-bookworm
+FROM golang:1.24-bookworm
 
 ARG USER=cosmos
 ARG UID=10001
-ARG COSMOVISOR_VERSION=v1.5.0
+ARG COSMOVISOR_VERSION=v1.7.1
 
 RUN apt-get update && apt-get install -y ca-certificates tzdata bash curl wget lz4 jq tar
 
