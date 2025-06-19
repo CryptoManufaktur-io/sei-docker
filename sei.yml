@@ -13,6 +13,7 @@ services:
       dockerfile: Dockerfile.binary
       args:
         - DAEMON_VERSION=${SEID_VERSION}
+        - COSMOVISOR_VERSION=${COSMOVISOR_TAG}
         - USER=sei
     image: sei:local
     pull_policy: never
@@ -93,6 +94,7 @@ services:
       dockerfile: Dockerfile.binary
       args:
         - DAEMON_VERSION=${SEID_VERSION}
+        - COSMOVISOR_VERSION=${COSMOVISOR_TAG}
         - USER=sei
     image: sei:local
     pull_policy: never
@@ -124,6 +126,7 @@ services:
       dockerfile: Dockerfile.binary
       args:
         - DAEMON_VERSION=${SEID_VERSION}
+        - COSMOVISOR_VERSION=${COSMOVISOR_TAG}
         - USER=sei
     image: sei:local
     pull_policy: never
