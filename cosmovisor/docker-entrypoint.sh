@@ -83,7 +83,10 @@ if [[ ! -f /cosmos/.cosmovisor ]]; then
   compile_version $DAEMON_VERSION
   mkdir -p $__genesis_path/bin
   mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
-  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 644 '{}' "$__genesis_path/bin/" \;
+  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__genesis_path/bin/" \;
+  # Make sure we are using local libs, so any issues with that show up now
+  chmod -R 644 /go/pkg/mod/github.com/sei-protocol
+  rm -rf /go/pkg/mod/github.com/sei-protocol
 
   mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
   cp $__genesis_path/bin/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
@@ -207,13 +210,19 @@ if [ "$__should_update" -eq 2 ]; then
   mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
   compile_version $DAEMON_VERSION
   mv /build/sei-chain/build/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
-  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 644 '{}' "$__upgrades_path/$DAEMON_VERSION/bin/" \;
+  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__upgrades_path/$DAEMON_VERSION/bin/" \;
+  # Make sure we are using local libs, so any issues with that show up now
+  chmod -R 644 /go/pkg/mod/github.com/sei-protocol
+  rm -rf /go/pkg/mod/github.com/sei-protocol
   echo "Done!"
 elif [ "$__should_update" -eq 1 ]; then
   echo "Updating binary for current version."
   compile_version $DAEMON_VERSION
   mv /build/sei-chain/build/$DAEMON_NAME $__current_path/bin/$DAEMON_NAME
-  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 644 '{}' "$__current_path/bin/" \;
+  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__current_path/bin/" \;
+  # Make sure we are using local libs, so any issues with that show up now
+  chmod -R 644 /go/pkg/mod/github.com/sei-protocol
+  rm -rf /go/pkg/mod/github.com/sei-protocol
   echo "Done!"
 else
   echo "No updates needed."
