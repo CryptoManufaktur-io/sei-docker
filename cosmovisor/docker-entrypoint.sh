@@ -12,19 +12,8 @@ compile_version() {
   rm -rf /build/*
   cd /build
   git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
-  go mod download
-  WASMVM_VERSION=$(go list -f {{.Replace.Version}} -m github.com/CosmWasm/wasmvm | sed s/-.*//)
-  echo "WASMVM_VERSION=$WASMVM_VERSION"
-  LIBWASMVM_FILENAME="libwasmvm_muslc.x86_64.a"
-  LIBWASMVM_URL="https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/$LIBWASMVM_FILENAME"
-  curl -L -o $LIBWASMVM_FILENAME $LIBWASMVM_URL
-  mkdir -p lib
-  mv $LIBWASMVM_FILENAME lib/libwasmvm.a
-  export CGO_ENABLED=1
-  export CGO_CFLAGS="-I$PWD/lib"
-  export CGO_LDFLAGS="-L$PWD/lib -lwasmvm -lm"
-  export CGO_LDFLAGS_ALLOW="-Wl,-rpath=.*"
-  GOOS="linux" GOARCH="amd64" make build
+  # Build and set linker flags so the .so files can be found in the local directory
+  make build LDFLAGS='-extldflags "-Wl,-rpath,$$ORIGIN"'
 }
 
 # Common cosmovisor paths.
@@ -94,9 +83,11 @@ if [[ ! -f /cosmos/.cosmovisor ]]; then
   compile_version $DAEMON_VERSION
   mkdir -p $__genesis_path/bin
   mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
+  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 644 '{}' "$__genesis_path/bin/" \;
 
   mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
-  cp  $__genesis_path/bin/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
+  cp $__genesis_path/bin/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
+  cp $__genesis_path/bin/libwasmvm*.x86_64.so $__upgrades_path/$DAEMON_VERSION/bin/
 
   # Point to current.
   ln -s -f $__genesis_path $__current_path
@@ -216,11 +207,13 @@ if [ "$__should_update" -eq 2 ]; then
   mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
   compile_version $DAEMON_VERSION
   mv /build/sei-chain/build/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
+  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 644 '{}' "$__upgrades_path/$DAEMON_VERSION/bin/" \;
   echo "Done!"
 elif [ "$__should_update" -eq 1 ]; then
   echo "Updating binary for current version."
   compile_version $DAEMON_VERSION
   mv /build/sei-chain/build/$DAEMON_NAME $__current_path/bin/$DAEMON_NAME
+  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 644 '{}' "$__current_path/bin/" \;
   echo "Done!"
 else
   echo "No updates needed."
