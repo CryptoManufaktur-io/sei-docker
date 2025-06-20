@@ -22,6 +22,7 @@ services:
     stop_grace_period: 5m
     environment:
       - DAEMON_VERSION=${SEID_TAG}
+      - FORCE_REBUILD=${FORCE_REBUILD:-false}
       - EXTRA_FLAGS=${EXTRA_FLAGS:-}
       - NETWORK=${NETWORK}
       - MONIKER=${MONIKER}
