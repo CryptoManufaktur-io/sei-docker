@@ -12,7 +12,7 @@ services:
       context: ./cosmovisor
       dockerfile: Dockerfile.binary
       args:
-        - DAEMON_VERSION=${SEID_VERSION}
+        - DAEMON_VERSION=${SEID_TAG}
         - COSMOVISOR_VERSION=${COSMOVISOR_TAG}
         - USER=sei
     image: sei:local
@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     stop_grace_period: 5m
     environment:
-      - DAEMON_VERSION=${SEID_VERSION}
+      - DAEMON_VERSION=${SEID_TAG}
       - EXTRA_FLAGS=${EXTRA_FLAGS:-}
       - NETWORK=${NETWORK}
       - MONIKER=${MONIKER}
@@ -93,14 +93,14 @@ services:
       context: ./cosmovisor
       dockerfile: Dockerfile.binary
       args:
-        - DAEMON_VERSION=${SEID_VERSION}
+        - DAEMON_VERSION=${SEID_TAG}
         - COSMOVISOR_VERSION=${COSMOVISOR_TAG}
         - USER=sei
     image: sei:local
     pull_policy: never
     user: sei
     environment:
-      - DAEMON_VERSION=${SEID_VERSION}
+      - DAEMON_VERSION=${SEID_TAG}
       - EXTRA_FLAGS=${EXTRA_FLAGS:-}
       - NETWORK=${NETWORK}
       - MONIKER=${MONIKER}
@@ -125,14 +125,14 @@ services:
       context: ./cosmovisor
       dockerfile: Dockerfile.binary
       args:
-        - DAEMON_VERSION=${SEID_VERSION}
+        - DAEMON_VERSION=${SEID_TAG}
         - COSMOVISOR_VERSION=${COSMOVISOR_TAG}
         - USER=sei
     image: sei:local
     pull_policy: never
     user: sei
     environment:
-      - DAEMON_VERSION=${SEID_VERSION}
+      - DAEMON_VERSION=${SEID_TAG}
       - EXTRA_FLAGS=${EXTRA_FLAGS:-}
       - NETWORK=${NETWORK}
       - MONIKER=${MONIKER}
