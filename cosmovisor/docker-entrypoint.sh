@@ -203,19 +203,23 @@ compare_versions "$__current_version" "$DAEMON_VERSION"
 # __should_update=1: Higher patch version.
 # __should_update=2: Higher minor or major version.
 if [ "$__should_update" -eq 2 ]; then
-  echo "Network upgrade..."
-  # This is a network upgrade. We'll build the binary, put it in a new folder
-  # and we'll let cosmovisor handle the upgrade just in time.
-  # Thankfully, sei keeps the upgrade name the same as the version tag, so no need to query
-  # the tendermint API.
-  mkdir -p "$__upgrades_path/$DAEMON_VERSION/bin"
-  compile_version "$DAEMON_VERSION"
-  mv "/build/sei-chain/build/$DAEMON_NAME" "$__upgrades_path/$DAEMON_VERSION/bin/"
-  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__upgrades_path/$DAEMON_VERSION/bin/" \;
-  # Make sure we are using local libs, so any issues with that show up now
-  chmod -R 755 /go/pkg/mod/github.com/sei-protocol
-  rm -rf /go/pkg/mod/github.com/sei-protocol
-  echo "Done!"
+  if [[ ! -f "$__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME" || "${FORCE_REBUILD}" = "true" ]]; then
+    echo "Network upgrade..."
+    # This is a network upgrade. We'll build the binary, put it in a new folder
+    # and we'll let cosmovisor handle the upgrade just in time.
+    # Thankfully, sei keeps the upgrade name the same as the version tag, so no need to query
+    # the tendermint API.
+    mkdir -p "$__upgrades_path/$DAEMON_VERSION/bin"
+    compile_version "$DAEMON_VERSION"
+    mv "/build/sei-chain/build/$DAEMON_NAME" "$__upgrades_path/$DAEMON_VERSION/bin/"
+    find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__upgrades_path/$DAEMON_VERSION/bin/" \;
+    # Make sure we are using local libs, so any issues with that show up now
+    chmod -R 755 /go/pkg/mod/github.com/sei-protocol
+    rm -rf /go/pkg/mod/github.com/sei-protocol
+    echo "Done!"
+  else
+    echo "Upgrade binary for seid $DAEMON_VERSION already exists, not building"
+  fi
 elif [ "$__should_update" -eq 1 ]; then
   echo "Updating binary for current version."
   compile_version "$DAEMON_VERSION"
@@ -225,8 +229,17 @@ elif [ "$__should_update" -eq 1 ]; then
   chmod -R 755 /go/pkg/mod/github.com/sei-protocol
   rm -rf /go/pkg/mod/github.com/sei-protocol
   echo "Done!"
+elif [ "${FORCE_REBUILD}" = "true" ]; then
+  echo "Rebuilding binary for current version."
+  compile_version "$__current_version"
+  mv "/build/sei-chain/build/$DAEMON_NAME" "$__current_path/bin/"
+  find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__current_path/bin/" \;
+  # Make sure we are using local libs, so any issues with that show up now
+  chmod -R 755 /go/pkg/mod/github.com/sei-protocol
+  rm -rf /go/pkg/mod/github.com/sei-protocol
+  echo "Done!"
 else
-  echo "No updates needed."
+  echo "No updates needed for seid binary ${__current_version}."
 fi
 
 echo "Updating config..."
