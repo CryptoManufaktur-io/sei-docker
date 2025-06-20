@@ -36,4 +36,4 @@ An image with the `seid` binary is also avilable, e.g:
 
 Sei Docker uses a semver scheme.
 
-This is sei-docker v2.0.1
+This is sei-docker v2.1.0
