@@ -11,8 +11,9 @@ compile_version() {
   # Always start from a clean state.
   rm -rf /build/*
   cd /build
-  git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout tags/${version}
+  git clone https://github.com/sei-protocol/sei-chain.git && cd sei-chain && git checkout "tags/${version}"
   # Build and set linker flags so the .so files can be found in the local directory
+#shellcheck disable=SC2016
   make build LDFLAGS='-extldflags "-Wl,-rpath,$$ORIGIN"'
 }
 
@@ -25,24 +26,24 @@ __upgrades_path=$__cosmovisor_path/upgrades
 if [[ ! -f /cosmos/.initialized ]]; then
   echo "Initializing!"
 
-  compile_version $DAEMON_VERSION
-  mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
+  compile_version "$DAEMON_VERSION"
+  mv "/build/sei-chain/build/$DAEMON_NAME" "$__genesis_path/bin/"
 
-  mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
-  cp  $__genesis_path/bin/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
+  mkdir -p "$__upgrades_path/$DAEMON_VERSION/bin"
+  cp "$__genesis_path/bin/$DAEMON_NAME" "$__upgrades_path/$DAEMON_VERSION/bin/"
 
   # Point to current.
-  ln -s -f $__genesis_path $__current_path
+  ln -s -f "$__genesis_path" "$__current_path"
 
   echo "Running init..."
-  $__genesis_path/bin/$DAEMON_NAME init $MONIKER --chain-id $NETWORK --home /cosmos --overwrite
+  "$__genesis_path/bin/$DAEMON_NAME" init "$MONIKER" --chain-id "$NETWORK" --home /cosmos --overwrite
 
   echo "Downloading genesis..."
-  wget https://raw.githubusercontent.com/sei-protocol/testnet/main/$NETWORK/genesis.json -O /cosmos/config/genesis.json
+  wget "https://raw.githubusercontent.com/sei-protocol/testnet/main/$NETWORK/genesis.json" -O /cosmos/config/genesis.json
 
   if [ -n "$SNAPSHOT" ]; then
     echo "Downloading snapshot..."
-    curl -o - -L $SNAPSHOT | lz4 -c -d - | tar --exclude='data/priv_validator_state.json' -x -C /cosmos
+    curl -o - -L "$SNAPSHOT" | lz4 -c -d - | tar --exclude='data/priv_validator_state.json' -x -C /cosmos
   else
     echo "No snapshot URL defined."
   fi
@@ -59,13 +60,13 @@ if [[ ! -f /cosmos/.initialized ]]; then
     echo "SNAPSHOT_HEIGHT=$SNAPSHOT_HEIGHT"
 
     # Get the snapshot hash
-    SNAPSHOT_HASH=$(curl -s $RPC_URL/block\?height\=$SNAPSHOT_HEIGHT | jq -r '.block_id.hash')
+    SNAPSHOT_HASH=$(curl -s "$RPC_URL/block\?height\=$SNAPSHOT_HEIGHT" | jq -r '.block_id.hash')
     echo "SNAPSHOT_HASH=$SNAPSHOT_HASH"
 
     dasel put -f /cosmos/config/config.toml -v true statesync.enable
     dasel put -f /cosmos/config/config.toml -v "${RPC_URL},${RPC_URL}" statesync.rpc-servers
-    dasel put -f /cosmos/config/config.toml -v $SNAPSHOT_HEIGHT statesync.trust-height
-    dasel put -f /cosmos/config/config.toml -v $SNAPSHOT_HASH statesync.trust-hash
+    dasel put -f /cosmos/config/config.toml -v "$SNAPSHOT_HEIGHT" statesync.trust-height
+    dasel put -f /cosmos/config/config.toml -v "$SNAPSHOT_HASH" statesync.trust-hash
     dasel put -f /cosmos/config/config.toml -v 2 statesync.fetchers
     dasel put -f /cosmos/config/config.toml -v "10s" statesync.chunk-request-timeout
   else
@@ -80,20 +81,20 @@ fi
 
 # If previously running without cosmovisor.
 if [[ ! -f /cosmos/.cosmovisor ]]; then
-  compile_version $DAEMON_VERSION
-  mkdir -p $__genesis_path/bin
-  mv /build/sei-chain/build/$DAEMON_NAME $__genesis_path/bin/$DAEMON_NAME
+  compile_version "$DAEMON_VERSION"
+  mkdir -p "$__genesis_path/bin"
+  mv "/build/sei-chain/build/$DAEMON_NAME" "$__genesis_path/bin/"
   find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__genesis_path/bin/" \;
   # Make sure we are using local libs, so any issues with that show up now
   chmod -R 755 /go/pkg/mod/github.com/sei-protocol
   rm -rf /go/pkg/mod/github.com/sei-protocol
 
-  mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
-  cp $__genesis_path/bin/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
-  cp $__genesis_path/bin/libwasmvm*.x86_64.so $__upgrades_path/$DAEMON_VERSION/bin/
+  mkdir -p "$__upgrades_path/$DAEMON_VERSION/bin"
+  cp "$__genesis_path/bin/$DAEMON_NAME" "$__upgrades_path/$DAEMON_VERSION/bin/"
+  cp "$__genesis_path/bin/libwasmvm*.x86_64.so" "$__upgrades_path/$DAEMON_VERSION/bin/"
 
   # Point to current.
-  ln -s -f $__genesis_path $__current_path
+  ln -s -f "$__genesis_path" "$__current_path"
 
   touch /cosmos/.cosmovisor
 else
@@ -192,11 +193,11 @@ compare_versions() {
 
 # First, we get the current version and compare it with the desired version.
 # Also don't know why seid writes to stderr.
-__current_version=$($__current_path/bin/$DAEMON_NAME version 2>&1)
+__current_version=$("$__current_path/bin/$DAEMON_NAME" version 2>&1)
 
 echo "Current version: ${__current_version}. Desired version: ${DAEMON_VERSION}"
 
-compare_versions $__current_version $DAEMON_VERSION
+compare_versions "$__current_version" "$DAEMON_VERSION"
 
 # __should_update=0: No update needed or versions are the same.
 # __should_update=1: Higher patch version.
@@ -207,9 +208,9 @@ if [ "$__should_update" -eq 2 ]; then
   # and we'll let cosmovisor handle the upgrade just in time.
   # Thankfully, sei keeps the upgrade name the same as the version tag, so no need to query
   # the tendermint API.
-  mkdir -p $__upgrades_path/$DAEMON_VERSION/bin
-  compile_version $DAEMON_VERSION
-  mv /build/sei-chain/build/$DAEMON_NAME $__upgrades_path/$DAEMON_VERSION/bin/$DAEMON_NAME
+  mkdir -p "$__upgrades_path/$DAEMON_VERSION/bin"
+  compile_version "$DAEMON_VERSION"
+  mv "/build/sei-chain/build/$DAEMON_NAME" "$__upgrades_path/$DAEMON_VERSION/bin/"
   find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__upgrades_path/$DAEMON_VERSION/bin/" \;
   # Make sure we are using local libs, so any issues with that show up now
   chmod -R 755 /go/pkg/mod/github.com/sei-protocol
@@ -217,8 +218,8 @@ if [ "$__should_update" -eq 2 ]; then
   echo "Done!"
 elif [ "$__should_update" -eq 1 ]; then
   echo "Updating binary for current version."
-  compile_version $DAEMON_VERSION
-  mv /build/sei-chain/build/$DAEMON_NAME $__current_path/bin/$DAEMON_NAME
+  compile_version "$DAEMON_VERSION"
+  mv "/build/sei-chain/build/$DAEMON_NAME" "$__current_path/bin/"
   find /go/pkg/mod/ -type f -name 'libwasmvm*.x86_64.so' -exec install -m 444 '{}' "$__current_path/bin/" \;
   # Make sure we are using local libs, so any issues with that show up now
   chmod -R 755 /go/pkg/mod/github.com/sei-protocol
@@ -239,9 +240,9 @@ dasel put -f /cosmos/config/config.toml -v "10s" consensus.timeout_commit
 dasel put -f /cosmos/config/config.toml -v "${__public_ip}:${CL_P2P_PORT}" p2p.external_address
 dasel put -f /cosmos/config/config.toml -v "tcp://0.0.0.0:${CL_P2P_PORT}" p2p.laddr
 dasel put -f /cosmos/config/config.toml -v "tcp://0.0.0.0:${CL_RPC_PORT}" rpc.laddr
-dasel put -f /cosmos/config/config.toml -v ${MONIKER} moniker
+dasel put -f /cosmos/config/config.toml -v "${MONIKER}" moniker
 dasel put -f /cosmos/config/config.toml -v true prometheus
-dasel put -f /cosmos/config/config.toml -v ${LOG_LEVEL} log_level
+dasel put -f /cosmos/config/config.toml -v "${LOG_LEVEL}" log_level
 dasel put -f /cosmos/config/config.toml -v "false" db-sync.db-sync-enable
 dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.send-rate
 dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.recv-rate
@@ -269,7 +270,7 @@ echo "Downloading peers..."
 PEERS=$(curl -sL "${RPC_URL}/net_info")
 PARSED_PEERS=$(echo "$PEERS" | jq -r '.peers[].url | sub("^mconn://"; "")' | paste -sd "," -)
 
-dasel put -f /cosmos/config/config.toml -v $PARSED_PEERS p2p.persistent-peers
+dasel put -f /cosmos/config/config.toml -v "$PARSED_PEERS" p2p.persistent-peers
 
 # cosmovisor will create a subprocess to handle upgrades
 # so we need a special way to handle SIGTERM
