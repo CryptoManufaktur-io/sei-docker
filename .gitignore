@@ -1,5 +1,7 @@
 .env*
-ext-network.yml
 *.swp
-keys/
+*.bak
+*.original
 custom.yml
+ext-network.yml
+keys/
