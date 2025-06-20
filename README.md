@@ -18,9 +18,9 @@ To update the software, run `./seid update` and then `./seid up`
 
 ## Updating sei-docker from v1.0.0
 
-Before upgrading the seid binary, run `./seid update` without changing the `SEID_VERSION` env var. It will set up cosmovisor using the current binary.
+Before upgrading the seid binary, run `./seid update` without changing the `SEID_TAG` env var. It will set up cosmovisor using the current binary.
 
-Once that's done, you can update `SEID_VERSION` and restart the container so the new binary is compiled and added to the upgrades folder.
+Once that's done, you can update `SEID_TAG` and restart the container so the new binary is compiled and added to the upgrades folder.
 
 ### CLI
 
