@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Handle updates and upgrades.
 __should_update=0
 
@@ -85,39 +87,39 @@ compare_versions() {
 # Example usage
 compare_versions "v6.0.0" "v6.0.1"
 echo $__should_update # should be 2
-echo "expected: 2\n"
+echo "expected: 2"
 
 compare_versions "v6.0.0" "v6.0.0-hotfix"
 echo $__should_update # should be 1
-echo "expected: 1\n"
+echo "expected: 1"
 
 compare_versions "v6.0.0-hotfix" "v6.0.0-hotfix-3"
 echo $__should_update # should be 1
-echo "expected: 1\n"
+echo "expected: 1"
 
 compare_versions "v6.0.0-hotfix-3" "v6.0.1"
 echo $__should_update # should be 2
-echo "expected: 2\n"
+echo "expected: 2"
 
 compare_versions "v6.0.1" "v6.0.1-hotfix-rpc-9"
 echo $__should_update # should be 1
-echo "expected: 1\n"
+echo "expected: 1"
 
 compare_versions "v6.0.1-hotfix-rpc-9" "v6.0.1-hotfix-rpc-10"
 echo $__should_update # should be 1
-echo "expected: 1\n"
+echo "expected: 1"
 
 compare_versions "v6.0.1-hotfix-rpc-9" "v6.0.1-hotfix-rpc-13"
 echo $__should_update # should be 1
-echo "expected: 1\n"
+echo "expected: 1"
 
 compare_versions "v6.0.1-hotfix-rpc-10" "v6.0.2"
 echo $__should_update # should be 2
-echo "expected: 2\n"
+echo "expected: 2"
 
 compare_versions "v6.0.2" "v6.0.3"
 echo $__should_update # should be 2
-echo "expected: 2\n"
+echo "expected: 2"
 
 echo "# __should_update=0: No update needed or versions are the same.
 # __should_update=1: Higher patch version.
