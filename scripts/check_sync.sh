@@ -46,8 +46,7 @@ load_env_file() {
       elif [[ "$val" =~ ^\'.*\'$ ]]; then
         val="${val:1:-1}"
       fi
-      printf -v "$key" '%s' "$val"
-      export "$key"
+      export "${key}=${val}"
     fi
   done < "$file"
 }
