@@ -1065,7 +1065,7 @@ __me="./$(basename "${BASH_SOURCE[0]}")"
 trap '__handle_error $? $LINENO' ERR
 trap '__handle_error $? $LINENO' EXIT
 
-if [[ "$#" -eq 0 || "$*" = "--help" || "$*" = "-h" || "$*" = "update --help" || "$*" = "update -h" ]]; then
+if [[ "$#" -eq 0 || ( "$1" =~ ^-h|--help$ && "$2" != "check-sync" ) || "$*" = "update --help" || "$*" = "update -h" ]]; then
   help "$@"
   exit 0
 fi
@@ -1130,8 +1130,10 @@ if ! __docompose --help >/dev/null 2>&1; then
 fi
 
 case "$__command" in
-  help|update|up|start|down|stop|restart|version|logs|check-sync|cmd|terminate|space)
+  help|update|up|start|down|stop|restart|version|logs|cmd|terminate|space)
     $__command "$@";;
+  check-sync)
+    check_sync "$@";;
   *)
     echo "Unrecognized command $__command"
     help
