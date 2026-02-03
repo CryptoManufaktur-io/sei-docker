@@ -16,6 +16,19 @@ If you want the consensus node RPC ports exposed locally, use `rpc-shared.yml` i
 
 To update the software, run `./seid update` and then `./seid up`
 
+## Check sync
+
+`./seid check-sync` compares the local node status with a public Sei RPC.
+
+Defaults used when no flags are provided:
+- Compose service: `sei`
+- Local RPC: `http://127.0.0.1:${CL_RPC_PORT:-26657}`
+- Public RPC: `https://sei-rpc.polkachu.com:443`
+
+Override as needed:
+- `./seid check-sync --public-rpc https://sei-rpc.polkachu.com:443`
+- `./seid check-sync --compose-service sei --public-rpc https://sei-rpc.polkachu.com:443`
+
 ## Updating sei-docker from v1.0.0
 
 Before upgrading the seid binary, run `./seid update` without changing the `SEID_TAG` env var. It will set up cosmovisor using the current binary.

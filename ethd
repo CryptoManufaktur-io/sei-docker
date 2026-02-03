@@ -920,7 +920,11 @@ logs() {
 }
 
 check_sync() {
-  ./scripts/check_sync.sh "$@"
+  if [[ "$#" -eq 0 ]]; then
+    ./scripts/check_sync.sh --compose-service sei --public-rpc https://sei-rpc.polkachu.com:443
+  else
+    ./scripts/check_sync.sh "$@"
+  fi
 }
 
 
@@ -1065,7 +1069,7 @@ __me="./$(basename "${BASH_SOURCE[0]}")"
 trap '__handle_error $? $LINENO' ERR
 trap '__handle_error $? $LINENO' EXIT
 
-if [[ "$#" -eq 0 || ( "$1" =~ ^-h|--help$ && "$2" != "check-sync" ) || "$*" = "update --help" || "$*" = "update -h" ]]; then
+if [[ "$#" -eq 0 || ( "$1" =~ ^-h|--help$ && "${2:-}" != "check-sync" ) || "$*" = "update --help" || "$*" = "update -h" ]]; then
   help "$@"
   exit 0
 fi
