@@ -220,11 +220,21 @@ if [[ ! "$local_height" =~ ^[0-9]+$ || ! "$public_height" =~ ^[0-9]+$ ]]; then
   fail_sync "non-numeric latest_block_height in RPC response"
 fi
 
+local_height_dec="$local_height"
+public_height_dec="$public_height"
+lag=$((public_height_dec - local_height_dec))
+
 sync_state="unknown"
 if [[ "$local_catching_up" == "true" ]]; then
   sync_state="syncing"
 elif [[ "$local_catching_up" == "false" ]]; then
   sync_state="in_sync"
+else
+  if (( lag > BLOCK_LAG_THRESHOLD )); then
+    sync_state="syncing"
+  else
+    sync_state="in_sync"
+  fi
 fi
 
 case "$sync_state" in
@@ -238,10 +248,6 @@ case "$sync_state" in
 
 echo
 echo "⏳ Head comparison"
-
-local_height_dec="$local_height"
-public_height_dec="$public_height"
-lag=$((public_height_dec - local_height_dec))
 if (( lag > 0 )); then
   lag_state="local behind"
   lag_abs=$lag
