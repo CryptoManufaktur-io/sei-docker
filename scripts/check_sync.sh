@@ -180,7 +180,6 @@ else
 fi
 
 echo "✅ Tools available in container"
-echo "⏳ Sync status"
 
 if ! local_status="$(http_get "$LOCAL_RPC" "/status")"; then
   fail_sync "RPC unreachable (${LOCAL_RPC})"
@@ -220,32 +219,19 @@ if [[ ! "$local_height" =~ ^[0-9]+$ || ! "$public_height" =~ ^[0-9]+$ ]]; then
   fail_sync "non-numeric latest_block_height in RPC response"
 fi
 
-if [[ ! "$local_height" =~ ^[0-9]+$ || ! "$public_height" =~ ^[0-9]+$ ]]; then
-  fail_sync "non-numeric latest_block_height in RPC response"
-fi
-
-sync_state="unknown"
-if [[ "$local_catching_up" == "true" ]]; then
-  sync_state="syncing"
-elif [[ "$local_catching_up" == "false" ]]; then
-  sync_state="in_sync"
-fi
-
-case "$sync_state" in
-  in_sync)
-    echo "✅ sync_state: in_sync";;
-  syncing)
-    echo "⏳ sync_state: syncing";;
-  *)
-    echo "⚠️  sync_state: unknown";;
- esac
-
-echo
-echo "⏳ Head comparison"
-
 local_height_dec="$local_height"
 public_height_dec="$public_height"
 lag=$((public_height_dec - local_height_dec))
+if (( lag > 0 )); then
+  lag_state="local behind"
+  lag_abs=$lag
+elif (( lag < 0 )); then
+  lag_state="local ahead"
+  lag_abs=$(( -lag ))
+else
+  lag_state="in sync"
+  lag_abs=0
+fi
 
 sync_state="unknown"
 if [[ "$local_catching_up" == "true" ]]; then
@@ -260,33 +246,6 @@ else
   fi
 fi
 
-case "$sync_state" in
-  in_sync)
-    echo "✅ sync_state: in_sync";;
-  syncing)
-    echo "⏳ sync_state: syncing";;
-  *)
-    echo "⚠️  sync_state: unknown";;
- esac
-
-echo
-echo "⏳ Head comparison"
-if (( lag > 0 )); then
-  lag_state="local behind"
-  lag_abs=$lag
-elif (( lag < 0 )); then
-  lag_state="local ahead"
-  lag_abs=$(( -lag ))
-else
-  lag_state="in sync"
-  lag_abs=0
-fi
-
-echo "Local head:  ${local_height_dec}"
-echo "Public head: ${public_height_dec}"
-echo "Lag:         ${lag_abs} blocks (threshold: ${BLOCK_LAG_THRESHOLD}) (${lag_state})"
-echo "ETA sample:  n/a"
-
 echo
 echo "⏳ Latest block comparison"
 
@@ -297,6 +256,7 @@ public_hash_display="$public_hash"
 
 echo "Local latest:  ${local_height_dec} ${local_hash_display}"
 echo "Public latest: ${public_height_dec} ${public_hash_display}"
+echo "Lag:         ${lag_abs} blocks (threshold: ${BLOCK_LAG_THRESHOLD}) (${lag_state})"
 
 echo
 
