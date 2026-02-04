@@ -6,3 +6,4 @@
 *.original
 custom.yml
 keys/
+.agent/

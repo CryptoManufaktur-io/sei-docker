@@ -23,7 +23,6 @@ Examples:
 USAGE
 }
 
-DEFAULT_LOCAL_RPC="http://127.0.0.1:${CL_RPC_PORT:-26657}"
 DEFAULT_PUBLIC_RPC="https://sei-rpc.polkachu.com:443"
 DEFAULT_BLOCK_LAG_THRESHOLD="2"
 
@@ -83,6 +82,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+DEFAULT_LOCAL_RPC="http://127.0.0.1:${CL_RPC_PORT:-26657}"
 LOCAL_RPC="${LOCAL_RPC:-$DEFAULT_LOCAL_RPC}"
 PUBLIC_RPC="${PUBLIC_RPC:-$DEFAULT_PUBLIC_RPC}"
 
@@ -180,7 +180,6 @@ else
 fi
 
 echo "✅ Tools available in container"
-echo "⏳ Sync status"
 
 if ! local_status="$(http_get "$LOCAL_RPC" "/status")"; then
   fail_sync "RPC unreachable (${LOCAL_RPC})"
@@ -220,25 +219,6 @@ if [[ ! "$local_height" =~ ^[0-9]+$ || ! "$public_height" =~ ^[0-9]+$ ]]; then
   fail_sync "non-numeric latest_block_height in RPC response"
 fi
 
-sync_state="unknown"
-if [[ "$local_catching_up" == "true" ]]; then
-  sync_state="syncing"
-elif [[ "$local_catching_up" == "false" ]]; then
-  sync_state="in_sync"
-fi
-
-case "$sync_state" in
-  in_sync)
-    echo "✅ sync_state: in_sync";;
-  syncing)
-    echo "⏳ sync_state: syncing";;
-  *)
-    echo "⚠️  sync_state: unknown";;
- esac
-
-echo
-echo "⏳ Head comparison"
-
 local_height_dec="$local_height"
 public_height_dec="$public_height"
 lag=$((public_height_dec - local_height_dec))
@@ -253,10 +233,18 @@ else
   lag_abs=0
 fi
 
-echo "Local head:  ${local_height_dec}"
-echo "Public head: ${public_height_dec}"
-echo "Lag:         ${lag_abs} blocks (threshold: ${BLOCK_LAG_THRESHOLD}) (${lag_state})"
-echo "ETA sample:  n/a"
+sync_state="unknown"
+if [[ "$local_catching_up" == "true" ]]; then
+  sync_state="syncing"
+elif [[ "$local_catching_up" == "false" ]]; then
+  sync_state="in_sync"
+else
+  if (( lag > BLOCK_LAG_THRESHOLD )); then
+    sync_state="syncing"
+  else
+    sync_state="in_sync"
+  fi
+fi
 
 echo
 echo "⏳ Latest block comparison"
@@ -268,6 +256,7 @@ public_hash_display="$public_hash"
 
 echo "Local latest:  ${local_height_dec} ${local_hash_display}"
 echo "Public latest: ${public_height_dec} ${public_hash_display}"
+echo "Lag:         ${lag_abs} blocks (threshold: ${BLOCK_LAG_THRESHOLD}) (${lag_state})"
 
 echo
 
