@@ -23,7 +23,6 @@ Examples:
 USAGE
 }
 
-DEFAULT_LOCAL_RPC="http://127.0.0.1:${CL_RPC_PORT:-26657}"
 DEFAULT_PUBLIC_RPC="https://sei-rpc.polkachu.com:443"
 DEFAULT_BLOCK_LAG_THRESHOLD="2"
 
@@ -83,6 +82,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+DEFAULT_LOCAL_RPC="http://127.0.0.1:${CL_RPC_PORT:-26657}"
 LOCAL_RPC="${LOCAL_RPC:-$DEFAULT_LOCAL_RPC}"
 PUBLIC_RPC="${PUBLIC_RPC:-$DEFAULT_PUBLIC_RPC}"
 
