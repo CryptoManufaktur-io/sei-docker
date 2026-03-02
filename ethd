@@ -921,8 +921,11 @@ logs() {
 
 check_sync() {
   if [[ $# -eq 0 ]]; then
-    echo ${CL_RPC_PORT}
-    bash scripts/check_sync.sh --public-rpc https://sei-rpc.polkachu.com: --compose-service sei --local-rpc http://127.0.0.1:${CL_RPC_PORT} || true
+    __var="CL_RPC_PORT"
+    __get_value_from_env "${__var}" "${__env_file}" "__port_to_use"
+
+    echo ${__port_to_use}
+    bash scripts/check_sync.sh --public-rpc https://sei-rpc.polkachu.com: --compose-service sei --local-rpc http://127.0.0.1:${__port_to_use} || true
   else
     bash scripts/check_sync.sh "$@" || true
   fi
