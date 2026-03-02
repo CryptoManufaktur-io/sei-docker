@@ -8,7 +8,7 @@ Usage: check_sync.sh [options]
 Options:
   --container NAME         Docker container name or ID to run curl/jq within
   --compose-service NAME   Docker Compose service name to resolve to a container
-  --local-rpc URL          Local Tendermint RPC URL (default: http://127.0.0.1:${RPC_PORT:-8545})
+  --local-rpc URL          Local Tendermint RPC URL (default: http://127.0.0.1:${CL_RPC_PORT:-26657})
   --public-rpc URL         Public/reference Tendermint RPC URL (required)
   --block-lag N            Acceptable lag in blocks (default: 2)
   --no-install             Do not install curl/jq inside the container
@@ -81,7 +81,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-LOCAL_RPC="${LOCAL_RPC:-http://127.0.0.1:${RPC_PORT:-8545}}"
+LOCAL_RPC="${LOCAL_RPC:-http://127.0.0.1:${CL_RPC_PORT:-26657}}"
 PUBLIC_RPC="${PUBLIC_RPC:-}"
 
 resolve_container_error=""
