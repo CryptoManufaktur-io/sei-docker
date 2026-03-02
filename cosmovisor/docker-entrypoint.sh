@@ -23,6 +23,13 @@ __genesis_path=$__cosmovisor_path/genesis
 __current_path=$__cosmovisor_path/current
 __upgrades_path=$__cosmovisor_path/upgrades
 
+if [ "${FRESH_INIT_WITH_DATA}" = "true" ]; then
+  rm -rf /cosmos/.initialized
+  rm -rf /cosmos/.cosmovisor
+  SNAPSHOT=""
+  STATE_SYNC="false"
+fi
+
 if [[ ! -f /cosmos/.initialized ]]; then
   echo "Initializing!"
 

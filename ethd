@@ -920,7 +920,11 @@ logs() {
 }
 
 check_sync() {
-  ./scripts/check_sync.sh "$@"
+  if [[ $# -eq 0 ]]; then
+    bash scripts/check_sync.sh --public-rpc https://sei-rpc.polkachu.com: --compose-service sei --local-rpc http://127.0.0.1:8545 || true
+  else
+    bash scripts/check_sync.sh "$@" || true
+  fi
 }
 
 
