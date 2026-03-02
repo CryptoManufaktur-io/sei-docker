@@ -23,7 +23,6 @@ Examples:
 USAGE
 }
 
-DEFAULT_PUBLIC_RPC="https://sei-rpc.polkachu.com:443"
 DEFAULT_BLOCK_LAG_THRESHOLD="2"
 
 ENV_FILE="${ENV_FILE:-}"
