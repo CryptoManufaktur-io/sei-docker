@@ -283,7 +283,7 @@ dasel put -f /cosmos/config/app.toml -v 40000 state-store.sc-cache-size
 dasel put -f /cosmos/config/app.toml -v 500 state-store.concurrency-workers
 dasel put -f /cosmos/config/app.toml -v "true" state-store.occ-enabled
 
-dasel put -f /cosmos/config/client.toml -v "tcp://localhost:${CL_RPC_PORT}" node
+dasel put -f /cosmos/config/client.toml -v "tcp://0.0.0.0:${CL_RPC_PORT}" node
 
 # Always update peers.
 echo "Downloading peers..."
