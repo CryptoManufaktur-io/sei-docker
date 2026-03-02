@@ -23,6 +23,13 @@ __genesis_path=$__cosmovisor_path/genesis
 __current_path=$__cosmovisor_path/current
 __upgrades_path=$__cosmovisor_path/upgrades
 
+if [ "${FRESH_INIT_WITH_DATA}" = "true" ]; then
+  rm -rf /cosmos/.initialized
+  rm -rf /cosmos/.cosmovisor
+  SNAPSHOT=""
+  STATE_SYNC="false"
+fi
+
 if [[ ! -f /cosmos/.initialized ]]; then
   echo "Initializing!"
 
@@ -259,6 +266,7 @@ dasel put -f /cosmos/config/config.toml -v "${LOG_LEVEL}" log_level
 dasel put -f /cosmos/config/config.toml -v "false" db-sync.db-sync-enable
 dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.send-rate
 dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.recv-rate
+dasel put -f /cosmos/config/config.toml -v "${BLOCK_BEHIND_THRESHOLD}" self-remediation.blocks-behind-threshold
 
 dasel put -f /cosmos/config/app.toml -v "0.0.0.0:${RPC_PORT}" json-rpc.address
 dasel put -f /cosmos/config/app.toml -v "0.0.0.0:${WS_PORT}" json-rpc.ws-address
@@ -276,7 +284,7 @@ dasel put -f /cosmos/config/app.toml -v 40000 state-store.sc-cache-size
 dasel put -f /cosmos/config/app.toml -v 500 state-store.concurrency-workers
 dasel put -f /cosmos/config/app.toml -v "true" state-store.occ-enabled
 
-dasel put -f /cosmos/config/client.toml -v "tcp://localhost:${CL_RPC_PORT}" node
+dasel put -f /cosmos/config/client.toml -v "tcp://0.0.0.0:${CL_RPC_PORT}" node
 
 # Always update peers.
 echo "Downloading peers..."

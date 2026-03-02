@@ -9,7 +9,7 @@ Options:
   --container NAME         Docker container name or ID to run curl/jq within
   --compose-service NAME   Docker Compose service name to resolve to a container
   --local-rpc URL          Local Tendermint RPC URL (default: http://127.0.0.1:${CL_RPC_PORT:-26657})
-  --public-rpc URL         Public/reference Tendermint RPC URL (default: https://sei-rpc.polkachu.com:443)
+  --public-rpc URL         Public/reference Tendermint RPC URL (required)
   --block-lag N            Acceptable lag in blocks (default: 2)
   --no-install             Do not install curl/jq inside the container
   --env-file PATH          Path to env file to load
@@ -23,7 +23,6 @@ Examples:
 USAGE
 }
 
-DEFAULT_PUBLIC_RPC="https://sei-rpc.polkachu.com:443"
 DEFAULT_BLOCK_LAG_THRESHOLD="2"
 
 ENV_FILE="${ENV_FILE:-}"
@@ -82,9 +81,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-DEFAULT_LOCAL_RPC="http://127.0.0.1:${CL_RPC_PORT:-26657}"
-LOCAL_RPC="${LOCAL_RPC:-$DEFAULT_LOCAL_RPC}"
-PUBLIC_RPC="${PUBLIC_RPC:-$DEFAULT_PUBLIC_RPC}"
+LOCAL_RPC="${LOCAL_RPC:-http://127.0.0.1:${CL_RPC_PORT:-26657}}"
+PUBLIC_RPC="${PUBLIC_RPC:-}"
 
 resolve_container_error=""
 resolve_container() {
