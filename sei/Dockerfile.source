@@ -1,0 +1,64 @@
+# Get dasel
+FROM ghcr.io/tomwright/dasel:2-alpine AS dasel
+
+# Stage 1: Build seid from source
+FROM golang:1.24-bookworm AS builder
+
+ARG DAEMON_VERSION
+
+WORKDIR /build
+
+RUN git clone https://github.com/sei-protocol/sei-chain.git . \
+    && git checkout "tags/${DAEMON_VERSION}"
+
+# Build with rpath so .so files can be found alongside the binary
+# shellcheck disable=SC2016
+RUN make build LDFLAGS='-extldflags "-Wl,-rpath,$$ORIGIN"'
+
+# Collect .so files needed at runtime
+ARG TARGETARCH
+RUN mkdir -p /build/libs \
+    && if [ "$TARGETARCH" = "amd64" ]; then __arch="x86_64"; else __arch="aarch64"; fi \
+    && find /build/ -type f -name "libwasmvm*.$__arch.so" -exec cp '{}' /build/libs/ \;
+
+# Stage 2: Runtime
+FROM debian:bookworm-slim
+
+ARG USER=sei
+ARG UID=10001
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates tzdata bash curl wget lz4 jq tar aria2 \
+    && rm -rf /var/lib/apt/lists/*
+
+VOLUME /cosmos
+
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --shell "/sbin/nologin" \
+    --uid "${UID}" \
+    "${USER}"
+
+RUN mkdir -p /cosmos/config /cosmos/data \
+    && chown -R ${USER}:${USER} /cosmos && chmod -R 700 /cosmos
+
+# Copy seid binary and shared libraries
+COPY --from=builder /build/build/seid /usr/local/bin/seid
+COPY --from=builder /build/libs/ /usr/local/lib/
+
+# Copy dasel for TOML config editing
+COPY --from=dasel /usr/local/bin/dasel /usr/local/bin/
+
+# Update shared library cache
+RUN ldconfig
+
+# Cannot assume buildkit, hence no chmod
+COPY ./docker-entrypoint.sh /usr/local/bin/
+
+# Belt and suspenders
+RUN chmod -R 755 /usr/local/bin/*
+
+USER ${USER}
+
+ENTRYPOINT ["docker-entrypoint.sh"]
