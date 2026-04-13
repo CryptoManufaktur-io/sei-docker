@@ -100,15 +100,17 @@ dasel put -f /cosmos/config/client.toml -v "tcp://0.0.0.0:${CL_RPC_PORT}" node
 
 # Always update peers.
 echo "Downloading peers..."
-if PEERS=$(curl -sL --max-time 30 "${RPC_URL}/net_info" 2>/dev/null) && [ -n "$PEERS" ]; then
-  PARSED_PEERS=$(echo "$PEERS" | jq -r '.peers[].url | sub("^mconn://"; "")' | paste -sd "," -)
+PEERS="$(curl -fsSL --max-time 30 "${RPC_URL}/net_info" 2>/dev/null || true)"
+
+if [ -n "$PEERS" ] && echo "$PEERS" | jq -e . >/dev/null 2>&1; then
+  PARSED_PEERS="$(echo "$PEERS" | jq -r '.peers[]?.url? | sub("^mconn://"; "")' | paste -sd "," -)"
   if [ -n "$PARSED_PEERS" ]; then
     dasel put -f /cosmos/config/config.toml -v "$PARSED_PEERS" p2p.persistent-peers
   else
-    echo "No peers found from RPC."
+    echo "No peers found from RPC, keeping existing peers."
   fi
 else
-  echo "Could not fetch peers from ${RPC_URL}/net_info, skipping."
+  echo "Could not parse peers from ${RPC_URL}/net_info, keeping existing peers."
 fi
 
 # Word splitting is desired for the command line parameters
