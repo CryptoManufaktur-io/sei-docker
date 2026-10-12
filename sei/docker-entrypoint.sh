@@ -73,7 +73,10 @@ dasel put -f /cosmos/config/config.toml -v "${__public_ip}:${CL_P2P_PORT}" p2p.e
 dasel put -f /cosmos/config/config.toml -v "tcp://0.0.0.0:${CL_P2P_PORT}" p2p.laddr
 dasel put -f /cosmos/config/config.toml -v "tcp://0.0.0.0:${CL_RPC_PORT}" rpc.laddr
 dasel put -f /cosmos/config/config.toml -v "${MONIKER}" moniker
-dasel put -f /cosmos/config/config.toml -v true prometheus
+# Prometheus exporter lives under [instrumentation]; a root-level "prometheus" key is ignored by seid.
+# Keep the listen port in sync with the metrics.port label in sei.yml.
+dasel put -f /cosmos/config/config.toml -t bool -v true instrumentation.prometheus
+dasel put -f /cosmos/config/config.toml -v ":26660" instrumentation.prometheus-listen-addr
 dasel put -f /cosmos/config/config.toml -v "${LOG_LEVEL}" log_level
 dasel put -f /cosmos/config/config.toml -v "false" db-sync.db-sync-enable
 dasel put -f /cosmos/config/config.toml -v 20480000000000 p2p.send-rate
