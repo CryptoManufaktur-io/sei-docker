@@ -13,6 +13,7 @@ services:
       dockerfile: Dockerfile.source
       args:
         - DAEMON_VERSION=${SEID_TAG}
+        - GO_VERSION=${GO_VERSION:-1.25}
         - USER=sei
     image: sei:local
     pull_policy: never
@@ -84,6 +85,7 @@ services:
       dockerfile: Dockerfile.source
       args:
         - DAEMON_VERSION=${SEID_TAG}
+        - GO_VERSION=${GO_VERSION:-1.25}
         - USER=sei
     image: sei:local
     pull_policy: never

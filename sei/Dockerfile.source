@@ -1,8 +1,11 @@
+# Go version of the builder image. v6.8 and later need Go 1.27.3 or newer; older seid versions build with 1.25.
+ARG GO_VERSION=1.25
+
 # Get dasel
 FROM ghcr.io/tomwright/dasel:2-alpine AS dasel
 
 # Stage 1: Build seid from source
-FROM golang:1.25-bookworm AS builder
+FROM golang:${GO_VERSION}-bookworm AS builder
 
 ARG DAEMON_VERSION
 
