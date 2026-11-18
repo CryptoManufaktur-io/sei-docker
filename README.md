@@ -20,7 +20,7 @@ To update the software, run `./seid update` and then `./seid up`
 
 To upgrade to a new seid version:
 
-1. Update `SEID_TAG` in `.env` to the desired version tag. For seid v6.8 and later also set `GO_VERSION=1.27` (v6.8 needs Go 1.27.3 or newer); older versions build with the default, 1.25.
+1. Update `SEID_TAG` in `.env` to the desired version tag. For seid v6.8 and later also set `GO_VERSION=1.27.3` (v6.8 needs Go 1.27.3 or newer; use exactly 1.27.3, as upstream does: 1.27.4 fails to link the bundled wasm library); older versions build with the default, 1.25.
 2. Run `./seid update` to rebuild the Docker image with the new binary.
 3. Run `./seid up` to start the node with the new version.
 
